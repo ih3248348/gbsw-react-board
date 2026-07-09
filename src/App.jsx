@@ -13,6 +13,25 @@ import BoardEditPage from './pages/BoardEditPage'
 export default function App() {
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
+
+
+    useEffect(() => {
+        supabase.auth.getSession().then(({ data }) => {
+            setSession(data.session);
+            setLoading(false);
+        });
+
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
+
     const [boards, setBoards] = useState([
         {
             id: 1,
@@ -39,6 +58,21 @@ export default function App() {
             views: 51,
         },
     ]);
+    async function getBoards() {
+        const { data, error } = await supabase.from("tb_board")
+            .select();
+        console.log(data)
+        if (error) {
+            console.error(error);
+            return;
+        }
+        setBoards(data);
+    }
+
+    useEffect(() => {
+        getBoards();
+    }, []);
+
 
     const handleDeleteBoard = (id) => {
         setBoards((prevBoards) => prevBoards.filter(board => board.id !== id));
@@ -64,22 +98,7 @@ export default function App() {
         );
     }
 
-    useEffect(() => {
-        supabase.auth.getSession().then(({ data }) => {
-            setSession(data.session);
-            setLoading(false);
-        });
 
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-        });
-
-        return () => {
-            subscription.unsubscribe();
-        };
-    }, []);
 
     if (loading) {
         return <div>Loading...</div>;
@@ -120,4 +139,4 @@ export default function App() {
         </>
     )
 
-}
+}                                                                                                                                                                                                                                                                                                                                 
